@@ -8,7 +8,7 @@ A real-time screener for perpetual DEX funding rates, designed to identify delta
 
 ## What It Does
 
-The screener aggregates live funding rates from several perpetual DEX exchanges and computes the maximum arbitrage spread (MAX ARB) for each symbol — the difference between the highest LONG rate and the highest SHORT rate across all tracked exchanges. This lets you instantly spot delta-neutral opportunities where you can earn funding by going long on one exchange and short on another for the same asset.
+The screener aggregates live funding rates from several perpetual DEX exchanges and computes the maximum arbitrage spread (MAX ARB) for each symbol, the difference between the highest LONG rate and the highest SHORT rate across all tracked exchanges. This lets you instantly spot delta-neutral opportunities where you can earn funding by going long on one exchange and short on another for the same asset.
 
 ---
 
@@ -43,7 +43,7 @@ npm install
 
 # 3. Configure environment variables
 cp .env.example .env
-# Open .env and fill in your TELEGRAM_BOT_TOKEN
+# Open .env and fill in your TELEGRAM_BOT_TOKEN 
 
 # 4. Start the server
 npm start
