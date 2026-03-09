@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Funding Screener</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #1e1e1e;
+      --bg-row:    #252525;
+      --bg-alt:    #212121;
+      --bg-hover:  #2c2c2c;
+      --bg-head:   #1a1a1a;
+      --bg-input:  #2a2a2a;
+      --border:    #333;
+      --text:      #ffffff;
+      --muted:     #888;
+      --dim:       #555;
+      --green:     #4ade80;
+      --green-bg:  rgba(74,222,128,.12);
+      --green-bd:  rgba(74,222,128,.3);
+      --red:       #f87171;
+      --red-bg:    rgba(248,113,113,.12);
+      --red-bd:    rgba(248,113,113,.3);
+      --yellow:    #facc15;
+      --yellow-bg: rgba(250,204,21,.12);
+      --yellow-bd: rgba(250,204,21,.3);
+    }
+
+    [data-theme="light"] {
+      --bg:        #f7f7f7;
+      --bg-row:    #ffffff;
+      --bg-alt:    #f2f2f2;
+      --bg-hover:  #e8e8e8;
+      --bg-head:   #eaeaea;
+      --bg-input:  #e2e2e2;
+      --border:    #d0d0d0;
+      --text:      #111111;
+      --muted:     #4a4a4a;
+      --dim:       #888888;
+      --green:     #16a34a;
+      --green-bg:  rgba(22,163,74,.10);
+      --green-bd:  rgba(22,163,74,.30);
+      --red:       #dc2626;
+      --red-bg:    rgba(220,38,38,.10);
+      --red-bd:    rgba(220,38,38,.30);
+      --yellow:    #b45309;
+      --yellow-bg: rgba(180,83,9,.10);
+      --yellow-bd: rgba(180,83,9,.30);
+    }
+
+    /* Light mode overrides for hardcoded dark colours */
+    [data-theme="light"] thead th,
+    [data-theme="light"] td:first-child,
+    [data-theme="light"] td:nth-child(2)  { border-color: #c8c8c8; }
+    [data-theme="light"] td:nth-child(n+3) { border-left-color: #c8c8c8; }
+    [data-theme="light"] td:last-child     { border-right-color: #c8c8c8; }
+
+    [data-theme="light"] .unit-menu {
+      background: #ffffff;
+      border-color: #d0d0d0;
+      box-shadow: 0 8px 24px rgba(0,0,0,.12);
+    }
+    [data-theme="light"] .ex-warn .ex-tooltip {
+      background: #ffffff;
+      border-color: #d0d0d0;
+      color: #333;
+    }
+    [data-theme="light"] .ex-warn .ex-tooltip::after { border-top-color: #d0d0d0; }
+    [data-theme="light"] ::-webkit-scrollbar-thumb       { background: #c0c0c0; }
+    [data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: #a0a0a0; }
+
+    html { scroll-behavior: auto; }
+
+    /* Allow body to scroll both axes — required for position:sticky on thead */
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 13px;
+      line-height: 1.4;
+      min-width: 740px; /* prevent layout collapse on narrow screens */
+    }
+
+    /* ── Top bar (sticky wrapper for header + toolbar) ───────────────── */
+
+    #topbar {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 20px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .logo-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -.3px;
+    }
+
+    .logo-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-left: 6px;
+      font-weight: 400;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    /* Exchange status pills */
+    .ex-statuses { display: flex; gap: 6px; }
+
+    .ex-pill {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 7px 2px 5px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--dim);
+      transition: border-color .25s, color .25s;
+      white-space: nowrap;
+    }
+    .ex-pill.ok      { border-color: var(--green-bd);  color: var(--muted); }
+    .ex-pill.stale   { border-color: var(--yellow-bd); color: var(--yellow); opacity: .85; }
+    .ex-pill.error   { border-color: var(--red-bd);    color: var(--red);    opacity: .7; }
+    .ex-pill.loading { color: var(--dim); }
+
+    .ex-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .ex-pill.ok      .ex-dot { background: var(--green); }
+    .ex-pill.stale   .ex-dot { background: var(--yellow); }
+    .ex-pill.error   .ex-dot { background: var(--red); }
+    .ex-pill.loading .ex-dot { background: var(--dim); animation: blink .9s infinite; }
+
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+    /* Countdown */
+    .countdown {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .cd-track {
+      width: 60px; height: 2px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .cd-fill {
+      height: 100%;
+      background: var(--green);
+      border-radius: 2px;
+      transition: width 1s linear;
+    }
+
+    .cd-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text);
+      min-width: 24px;
+      text-align: right;
+    }
+
+    .last-upd {
+      font-size: 11px;
+      color: var(--dim);
+      white-space: nowrap;
+    }
+
+    /* Toolbar */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .search-wrap { position: relative; }
+
+    .search-input {
+      width: 200px;
+      padding: 5px 10px 5px 28px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--text);
+      font-size: 12px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .search-input::placeholder { color: var(--dim); }
+    .search-input:focus { border-color: #4a4a4a; }
+
+    .search-icon {
+      position: absolute;
+      left: 8px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 12px;
+      color: var(--dim);
+      pointer-events: none;
+    }
+
+    .btn-refresh {
+      display: flex; align-items: center; gap: 4px;
+      padding: 5px 10px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-refresh:hover { border-color: var(--green-bd); color: var(--green); }
+    .btn-refresh.spinning .r-icon { animation: spin .5s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Exchange filter buttons */
+    .filter-group {
+      display: flex;
+      gap: 4px;
+    }
+    .btn-filter {
+      padding: 4px 9px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--dim);
+      font-size: 11px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: border-color .15s, color .15s, background .15s;
+    }
+    .btn-filter:hover { border-color: #4a4a4a; color: var(--muted); }
+    .btn-filter.active {
+      background: var(--green-bg);
+      border-color: var(--green-bd);
+      color: var(--green);
+    }
+
+    /* Funding countdown */
+    .funding-cd {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: var(--dim);
+      white-space: nowrap;
+      padding-left: 10px;
+      border-left: 1px solid var(--border);
+    }
+    .funding-time {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text);
+    }
+    .funding-utc {
+      font-size: 10px;
+      color: var(--dim);
+    }
+
+    .stats {
+      margin-left: auto;
+      display: flex;
+      gap: 14px;
+      font-size: 11px;
+      color: var(--dim);
+    }
+    .stats b { color: var(--muted); font-weight: 600; }
+
+    /* ── Table ───────────────────────────────────────────────────────── */
+
+    /* No overflow wrapper — body handles scrolling so sticky thead works */
+    .table-wrap {
+      padding: 16px 40px 40px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    /* Sticky header — top offset set dynamically via JS */
+    thead th {
+      position: sticky;
+      top: var(--topbar-h, 0px);
+      z-index: 10;
+      background: var(--bg-head);
+      padding: 8px 16px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      text-align: center;
+      white-space: nowrap;
+      /* All headers get a full box border */
+      border: 2px solid #3a3a3a;
+    }
+    thead th:first-child { text-align: center; }
+    thead th.th-arb { color: var(--green); }
+
+    /* Exchange logo in column header */
+    .ex-head {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+    .ex-logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+      opacity: 0.9;
+      border: 1px solid var(--border);
+    }
+    /* Letter-badge fallback shown when image fails */
+    .ex-logo-fallback {
+      display: none; /* shown via JS when img errors */
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+      align-items: center;
+      justify-content: center;
+    }
+
+    tbody tr { transition: background .1s; }
+    tbody tr:nth-child(odd)  td { background: var(--bg-alt); }
+    tbody tr:nth-child(even) td { background: var(--bg-row); }
+
+    /* LONG/SHORT cell highlights — higher specificity than striping, overridden by hover */
+    tbody tr:nth-child(odd)  td.cell-long,
+    tbody tr:nth-child(even) td.cell-long  { background: rgba(74,222,128,0.09); }
+    tbody tr:nth-child(odd)  td.cell-short,
+    tbody tr:nth-child(even) td.cell-short { background: rgba(248,113,113,0.09); }
+
+    tbody tr:hover td { background: var(--bg-hover) !important; }
+
+    td {
+      padding: 6px 16px;
+      text-align: center;
+      border: none;
+      vertical-align: middle;
+    }
+    /* SYMBOL + MAX ARB: full box border on every cell */
+    td:first-child,
+    td:nth-child(2) { border: 2px solid #3a3a3a; }
+    /* Exchange data cells: left border only to separate columns */
+    td:nth-child(n+3) { border-left: 2px solid #3a3a3a; }
+    /* Last exchange column gets a right border to close the table */
+    td:last-child { border-right: 2px solid #3a3a3a; }
+    /* Last row gets a bottom border to close the table */
+    tbody tr:last-child td { border-bottom: 2px solid #3a3a3a; }
+
+    /* Star / favorites column — must stay as table-cell, centering via text-align */
+    .col-star {
+      width: 40px;
+      padding: 0 !important;
+      text-align: center !important;
+      vertical-align: middle;
+    }
+    .star-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1;
+      padding: 4px;
+      color: var(--dim);
+      transition: color .15s, transform .1s;
+    }
+    .star-btn:hover { color: #f59e0b; transform: scale(1.2); }
+    .star-btn.fav   { color: #f59e0b; }
+
+    /* Symbol cell */
+    .sym {
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--text);
+      letter-spacing: -.2px;
+    }
+
+    /* Rate cell — centered */
+    .cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    .num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .num.pos { color: var(--green); }
+    .num.neg { color: var(--red);   }
+
+    .nil {
+      color: var(--dim);
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    /* LONG / SHORT badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .5px;
+      line-height: 1.5;
+      flex-shrink: 0;
+    }
+    .badge-l { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-bd); }
+    .badge-s { background: var(--red-bg);   color: var(--red);   border: 1px solid var(--red-bd);   }
+
+    /* MAX ARB cell */
+    .arb-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+    .arb-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--green);
+    }
+    .arb-pair {
+      font-size: 9px;
+      color: var(--dim);
+      letter-spacing: .2px;
+      white-space: nowrap;
+    }
+
+    /* Empty / loading */
+    .empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 80px 20px;
+      color: var(--dim);
+      font-size: 13px;
+    }
+
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--green);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+
+    /* ── API warning tooltip on column headers ─────────────────────── */
+    .ex-warn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      cursor: default;
+      position: relative;
+      color: #f59e0b;
+      line-height: 1;
+    }
+    .ex-warn .ex-tooltip {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1a1a1a;
+      border: 1px solid #3a3a3a;
+      color: #ccc;
+      font-size: 11px;
+      font-weight: 400;
+      text-transform: none;
+      letter-spacing: 0;
+      white-space: nowrap;
+      padding: 5px 9px;
+      border-radius: 5px;
+      pointer-events: none;
+      z-index: 999;
+      box-shadow: 0 4px 12px rgba(0,0,0,.5);
+    }
+    .ex-warn .ex-tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-top-color: #3a3a3a;
+    }
+    .ex-warn:hover .ex-tooltip { display: block; }
+
+    /* Theme toggle button */
+    .btn-theme {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 3px 8px;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1.4;
+      transition: border-color .15s;
+    }
+    .btn-theme:hover { border-color: var(--green-bd); }
+
+    /* Clickable LONG/SHORT badges */
+    a.badge {
+      text-decoration: none;
+      cursor: pointer;
+    }
+    a.badge:hover { filter: brightness(1.15); }
+
+    /* External link icon in column headers */
+    .ex-link {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      display: flex;
+      align-items: center;
+      color: var(--dim);
+      opacity: 0.45;
+      text-decoration: none;
+      transition: color .15s, opacity .15s;
+    }
+    .ex-link:hover { color: var(--green); opacity: 1; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #4a4a4a; }
+
+    /* ── Unit selector dropdown ──────────────────────────────────── */
+    .unit-selector { position: relative; }
+
+    .btn-unit {
+      display: flex; align-items: center; gap: 5px;
+      padding: 5px 10px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-unit:hover, .btn-unit.open { border-color: var(--green-bd); color: var(--green); }
+    .btn-unit-arrow { font-size: 9px; opacity: .6; }
+
+    .unit-menu {
+      display: none;
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      z-index: 300;
+      background: #1a1a1a;
+      border: 1px solid #3a3a3a;
+      border-radius: 6px;
+      padding: 10px;
+      min-width: 170px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.6);
+    }
+    .unit-menu.open { display: block; }
+
+    .unit-section { margin-bottom: 10px; }
+    .unit-section:last-child { margin-bottom: 0; }
+
+    .unit-section-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .8px;
+      color: var(--dim);
+      text-transform: uppercase;
+      margin-bottom: 5px;
+      padding: 0 2px;
+    }
+
+    .unit-options { display: flex; gap: 4px; }
+
+    .btn-unit-opt {
+      flex: 1;
+      padding: 4px 6px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--dim);
+      font-size: 11px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      text-align: center;
+      transition: border-color .1s, color .1s, background .1s;
+    }
+    .btn-unit-opt:hover { border-color: #4a4a4a; color: var(--muted); }
+    .btn-unit-opt.active {
+      background: var(--green-bg);
+      border-color: var(--green-bd);
+      color: var(--green);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Sticky top bar ──────────────────────────────────────────────── -->
+<div id="topbar">
+  <div class="header">
+    <div class="logo">
+      <span class="logo-icon">⚡</span>
+      <span class="logo-title">Funding Screener</span>
+      <span class="logo-sub">delta-neutral arb · perp DEXes</span>
+    </div>
+
+    <div class="header-right">
+      <div class="ex-statuses" id="exStatuses"></div>
+
+      <div class="countdown">
+        <span class="cd-num" id="cdNum">60s</span>
+        <div class="cd-track"><div class="cd-fill" id="cdFill" style="width:100%"></div></div>
+      </div>
+
+      <span class="last-upd" id="lastUpd">—</span>
+      <button class="btn-theme" id="btnTheme" onclick="toggleTheme()" title="Toggle light/dark mode">☀️</button>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input
+        id="searchInput"
+        class="search-input"
+        type="text"
+        placeholder="Search symbol…"
+        autocomplete="off"
+      />
+    </div>
+
+    <button class="btn-refresh" id="btnRefresh" onclick="triggerRefresh()">
+      <span class="r-icon">↻</span>
+      <span>Refresh</span>
+    </button>
+
+    <div class="unit-selector" id="unitSelector">
+      <button class="btn-unit" id="btnUnit" onclick="toggleUnitMenu(event)">
+        <span id="unitBtnLabel">8h | BPS</span>
+        <span class="btn-unit-arrow">▾</span>
+      </button>
+      <div class="unit-menu" id="unitMenu">
+        <div class="unit-section">
+          <div class="unit-section-label">Display Unit</div>
+          <div class="unit-options">
+            <button class="btn-unit-opt" data-unit="1h"  onclick="setDisplayUnit('1h')">1h</button>
+            <button class="btn-unit-opt active" data-unit="8h"  onclick="setDisplayUnit('8h')">8h</button>
+            <button class="btn-unit-opt" data-unit="apy" onclick="setDisplayUnit('apy')">APY</button>
+          </div>
+        </div>
+        <div class="unit-section">
+          <div class="unit-section-label">Rate Format</div>
+          <div class="unit-options">
+            <button class="btn-unit-opt active" data-fmt="bps" onclick="setRateFormat('bps')">BPS</button>
+            <button class="btn-unit-opt" data-fmt="pct" onclick="setRateFormat('pct')">%</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <button class="btn-filter active" data-ex="" onclick="setFilter(null)">All</button>
+      <button class="btn-filter" data-ex="01exchange"  onclick="setFilter('01exchange')">01Exchange</button>
+      <button class="btn-filter" data-ex="variational" onclick="setFilter('variational')">Variational</button>
+      <button class="btn-filter" data-ex="aster"       onclick="setFilter('aster')">Aster</button>
+      <button class="btn-filter" data-ex="hyperliquid" onclick="setFilter('hyperliquid')">Hyperliquid</button>
+    </div>
+
+    <div class="funding-cd">
+      Next Funding:
+      <span class="funding-time" id="fundingTime">—</span>
+      <span class="funding-utc"  id="fundingUtc"></span>
+    </div>
+
+    <div class="stats" id="stats"></div>
+  </div>
+</div>
+
+<!-- ── Table ──────────────────────────────────────────────────────── -->
+<div class="table-wrap">
+  <div class="empty" id="emptyState">
+    <div class="spinner"></div>
+    <span>Fetching funding rates…</span>
+  </div>
+  <table id="mainTable" style="display:none">
+    <thead id="tableHead"></thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+</div>
+
+<script>
+// ── Config ────────────────────────────────────────────────────────────────────
+
+const REFRESH_INTERVAL  = 60;   // seconds between auto-refreshes
+const STALE_WARN_MS     = 2 * 60 * 1000;  // show warning indicator after 2 min
+// Fetch/cache order (all exchanges); display order is set separately below
+const EXCHANGES = ['hyperliquid', 'variational', 'aster', '01exchange'];
+// Column display order: SYMBOL | MAX ARB | 01Exchange | Variational | Aster | Hyperliquid
+const DISPLAY_ORDER = ['01exchange', 'variational', 'aster', 'hyperliquid'];
+const EX_LABEL  = {
+  hyperliquid:  'Hyperliquid',
+  variational:  'Variational',
+  aster:        'Aster',
+  '01exchange': '01Exchange',
+};
+const EX_LOGO = {
+  hyperliquid:  'https://chainbroker.io/_next/image/?url=https%3A%2F%2Fstatic.chainbroker.io%2Fmediafiles%2Fprojects%2Fhyperliquid%2Fhyperliquid.jpg&w=2560&q=75',
+  variational:  'https://pbs.twimg.com/profile_images/1983193863532548096/2FkeRmBg_400x400.jpg',
+  aster:        'https://s3.coinmarketcap.com/static-gravity/image/39e7179e390b4d33b1ab657a42f019ea.jpg',
+  '01exchange': 'https://01.xyz/favicon.ico',
+};
+const EX_URL = {
+  hyperliquid:  'https://app.hyperliquid.xyz',
+  variational:  'https://variational.io',
+  aster:        'https://asterdex.com',
+  '01exchange': 'https://01.xyz',
+};
+
+// ── Token URL helper ──────────────────────────────────────────────────────────
+
+function exUrl(ex, sym) {
+  switch (ex) {
+    case '01exchange':  return `https://01.xyz/trade?market=${sym}USD`;
+    case 'variational': return `https://omni.variational.io/perpetual/${sym}`;
+    case 'aster':       return `https://www.asterdex.com/en/trade/pro/futures/${sym}USDT`;
+    case 'hyperliquid': return `https://app.hyperliquid.xyz/trade/${sym}`;
+    default:            return '#';
+  }
+}
+
+// ── State ─────────────────────────────────────────────────────────────────────
+
+let lastData      = null;
+let isDark        = true;
+let favorites     = new Set();  // symbols currently starred
+let countdown     = REFRESH_INTERVAL;
+let cdInterval    = null;
+let isRefreshing  = false;
+let activeFilter  = null;   // null = All; one exchange key string
+let displayUnit   = '8h';   // '1h' | '8h' | 'apy'
+let rateFormat    = 'bps';  // 'bps' | 'pct'
+let exStatus      = {};     // 'ok' | 'stale' | 'error' | 'loading'
+let exLastSuccess = {};     // ms timestamp of last successful fetch per exchange
+let exError       = {};     // error message string or null per exchange
+EXCHANGES.forEach(e => { exStatus[e] = 'loading'; exLastSuccess[e] = null; exError[e] = null; });
+
+// ── Sticky header offset ───────────────────────────────────────────────────────
+
+function updateStickyOffset() {
+  const h = document.getElementById('topbar').offsetHeight;
+  document.documentElement.style.setProperty('--topbar-h', h + 'px');
+}
+
+// ── Format helpers ────────────────────────────────────────────────────────────
+
+// rate8h: 8-hour decimal fraction (e.g. 0.0001 = 0.01% per 8h = 1 bps per 8h)
+// Returns a formatted string in the currently selected display unit and format.
+function fmtRate(rate8h) {
+  const bps8h = rate8h * 10000;
+  let value;
+  if      (displayUnit === '1h')  value = bps8h / 8;
+  else if (displayUnit === '8h')  value = bps8h;
+  else                            value = bps8h * 1095; // APY (365 × 3 periods)
+
+  if (rateFormat === 'pct') value /= 100;
+
+  const sign   = value >= 0 ? '+' : '';
+  const suffix = rateFormat === 'pct' ? '%' : '';
+  const dp     = { '8h-bps': 1, '8h-pct': 4, '1h-bps': 2, '1h-pct': 5, 'apy-bps': 0, 'apy-pct': 2 }
+                   [`${displayUnit}-${rateFormat}`] ?? 1;
+  return sign + value.toFixed(dp) + suffix;
+}
+
+function unitLabel() {
+  const u = displayUnit === 'apy' ? 'APY' : displayUnit;
+  const f = rateFormat === 'bps' ? 'bps' : '%';
+  return `${u} ${f}`;
+}
+
+// ── Exchange status ───────────────────────────────────────────────────────────
+
+function datAgeLabel(ms) {
+  if (!ms) return '';
+  const age = Math.floor((Date.now() - ms) / 1000);
+  if (age < 120) return '';
+  if (age < 3600) return ` ~${Math.floor(age / 60)}m`;
+  return ` ~${Math.floor(age / 3600)}h`;
+}
+
+function renderStatus() {
+  document.getElementById('exStatuses').innerHTML = EXCHANGES.map(ex => {
+    const st  = exStatus[ex];
+    const age = exLastSuccess[ex];
+    const staleWarn = (st === 'ok' || st === 'stale') && age && (Date.now() - age) > STALE_WARN_MS;
+    const ageLabel  = staleWarn ? datAgeLabel(age) : '';
+    const pillClass = staleWarn && st === 'ok' ? 'stale' : st; // ok but old → show as stale pill
+    return `
+    <div class="ex-pill ${pillClass}" title="${st === 'stale' || st === 'error' ? 'Using cached data' : ''}">
+      <div class="ex-dot"></div>
+      <span>${EX_LABEL[ex]}${ageLabel ? ' ⚠' + ageLabel : ''}</span>
+    </div>`;
+  }).join('');
+}
+
+// ── Countdown ─────────────────────────────────────────────────────────────────
+
+function startCountdown() {
+  clearInterval(cdInterval);
+  countdown = REFRESH_INTERVAL;
+  tickCountdown();
+  cdInterval = setInterval(() => {
+    countdown--;
+    tickCountdown();
+    if (countdown <= 0) { clearInterval(cdInterval); doRefresh(); }
+  }, 1000);
+}
+
+function tickCountdown() {
+  document.getElementById('cdNum').textContent  = countdown + 's';
+  document.getElementById('cdFill').style.width = (countdown / REFRESH_INTERVAL * 100) + '%';
+}
+
+// ── Render table ──────────────────────────────────────────────────────────────
+
+function renderTable(apiData) {
+  const exchanges = apiData.exchanges || {};
+
+  // Update status indicators, last-success timestamps, and error messages
+  EXCHANGES.forEach(ex => {
+    const exData = exchanges[ex];
+    exStatus[ex] = exData?.status || 'error';
+    if (exData?.lastSuccess) exLastSuccess[ex] = exData.lastSuccess;
+    exError[ex] = (exData?.status === 'stale' || exData?.status === 'error') ? (exData.error || null) : null;
+  });
+  renderStatus();
+
+  // Build symbol → { exchange → rate8h } map
+  const symMap = {};
+  EXCHANGES.forEach(ex => {
+    Object.entries(exchanges[ex]?.data || {}).forEach(([sym, rate]) => {
+      // Reject null, undefined, NaN, Infinity — same check as cell renderer
+      if (rate === null || rate === undefined || !isFinite(rate)) return;
+      if (!symMap[sym]) symMap[sym] = {};
+      symMap[sym][ex] = rate;
+    });
+  });
+
+  // Only rows with data on ≥ 2 exchanges (regardless of which ones)
+  let rows = Object.entries(symMap).filter(([, r]) => Object.keys(r).length >= 2);
+
+  // Compute arb per row
+  const rowData = rows.map(([sym, rates]) => {
+    const vals     = Object.entries(rates);
+    const maxEntry = vals.reduce((a, b) => b[1] > a[1] ? b : a);
+    const minEntry = vals.reduce((a, b) => b[1] < a[1] ? b : a);
+    const arb      = maxEntry[1] - minEntry[1];
+    return { sym, rates, arb, shortEx: maxEntry[0], longEx: minEntry[0] };
+  });
+
+  // Sort: favorites first (stable within each group by arb descending)
+  rowData.sort((a, b) => {
+    const fa = favorites.has(a.sym) ? 1 : 0;
+    const fb = favorites.has(b.sym) ? 1 : 0;
+    if (fb !== fa) return fb - fa;
+    return b.arb - a.arb;
+  });
+
+  // Search filter — substring match (case-insensitive)
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
+  const afterSearch = q ? rowData.filter(r => r.sym.toLowerCase().includes(q)) : rowData;
+
+  // Exchange filter — exactly mirrors badge assignment conditions:
+  //   SHORT badge: ex === shortEx && ex !== longEx
+  //   LONG  badge: ex === longEx  && ex !== shortEx
+  // So a row is included only when shortEx !== longEx (real arb pair exists)
+  // AND the selected exchange is one of the two badge-bearing extremes.
+  const filtered = activeFilter
+    ? afterSearch.filter(r =>
+        r.shortEx !== r.longEx &&
+        (r.shortEx === activeFilter || r.longEx === activeFilter)
+      )
+    : afterSearch;
+
+  // Stats bar
+  const live  = EXCHANGES.filter(ex => exStatus[ex] === 'ok' || exStatus[ex] === 'stale').length;
+  const stale = EXCHANGES.filter(ex => exStatus[ex] === 'stale').length;
+  document.getElementById('stats').innerHTML =
+    `<span><b>${filtered.length}</b> pairs</span>` +
+    `<span><b>${live}/${EXCHANGES.length}</b> exchanges</span>` +
+    (stale ? `<span style="color:var(--yellow)">⚠ ${stale} stale</span>` : '');
+
+  // Build thead using DISPLAY_ORDER; MAX ARB is the second column
+  // Widths: SYMBOL 15%, MAX ARB 15%, each exchange 20% (browser scales proportionally)
+  const headCols = DISPLAY_ORDER.map(ex => {
+    const letter   = EX_LABEL[ex][0];
+    const fallback = `<span class="ex-logo-fallback" id="fb-${ex}" style="display:none">${letter}</span>`;
+    const logo     = `<img src="${EX_LOGO[ex]}" class="ex-logo" alt="${EX_LABEL[ex]}" `
+                   + `onerror="this.style.display='none';document.getElementById('fb-${ex}').style.display='flex'" />`;
+    const sub      = `<span style="font-weight:400;font-size:9px;letter-spacing:0;text-transform:none;color:var(--dim)">${unitLabel()}</span>`;
+
+    // Warning icon shown when exchange is stale or error
+    let warn = '';
+    const st = exStatus[ex];
+    if (st === 'stale' || st === 'error') {
+      const age     = exLastSuccess[ex];
+      const ageStr  = age ? datAgeLabel(age) || 'just now' : 'never';
+      const errMsg  = exError[ex] ? ` — ${exError[ex]}` : '';
+      const tip     = `${EX_LABEL[ex]} API ${st === 'error' ? 'unavailable' : 'may be stale'}${errMsg} · last updated: ${ageStr.trim() || 'recently'}`;
+      warn = `<span class="ex-warn">⚠<span class="ex-tooltip">${tip}</span></span>`;
+    }
+
+    const extLink = `<a href="${EX_URL[ex]}" target="_blank" rel="noopener" class="ex-link" title="Open ${EX_LABEL[ex]}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>`;
+    return `<th width="20%">${extLink}<div class="ex-head">${logo}${fallback}<span style="position:relative">${EX_LABEL[ex]} ${warn}</span>${sub}</div></th>`;
+  }).join('');
+  const arbSub = `<span style="font-weight:400;font-size:9px;letter-spacing:0;text-transform:none;color:var(--dim)">${unitLabel()}</span>`;
+  document.getElementById('tableHead').innerHTML = `
+    <tr>
+      <th class="col-star"></th>
+      <th width="15%">Symbol</th>
+      <th width="15%" class="th-arb">Max Arb<br>${arbSub}</th>
+      ${headCols}
+    </tr>`;
+
+  // Build tbody
+  document.getElementById('tableBody').innerHTML = filtered.map(({ sym, rates, arb, shortEx, longEx }) => {
+    const cells = DISPLAY_ORDER.map(ex => {
+      const rate = rates[ex];
+      if (rate == null || !isFinite(rate)) {
+        return `<td><span class="nil">—</span></td>`;
+      }
+      const numCls = rate >= 0 ? 'pos' : 'neg';
+      let badge = '';
+      let cellCls = '';
+      if (ex === shortEx && ex !== longEx) {
+        badge   = `<a href="${exUrl(ex, sym)}" target="_blank" rel="noopener" class="badge badge-s">SHORT</a>`;
+        cellCls = ' cell-short';
+      }
+      if (ex === longEx && ex !== shortEx) {
+        badge   = `<a href="${exUrl(ex, sym)}" target="_blank" rel="noopener" class="badge badge-l">LONG</a>`;
+        cellCls = ' cell-long';
+      }
+      return `<td class="${cellCls.trim()}"><div class="cell">${badge}<span class="num ${numCls}">${fmtRate(rate)}</span></div></td>`;
+    }).join('');
+
+    const arbAPR  = fmtRate(arb);
+    const longLbl = EX_LABEL[longEx]  || longEx;
+    const shrtLbl = EX_LABEL[shortEx] || shortEx;
+
+    const isFav  = favorites.has(sym);
+    const starCls = isFav ? 'star-btn fav' : 'star-btn';
+    const starIcon = isFav ? '★' : '☆';
+
+    return `
+      <tr>
+        <td class="col-star"><button class="${starCls}" onclick="toggleFavorite('${sym}')" title="Favorite">${starIcon}</button></td>
+        <td><span class="sym">${sym}</span></td>
+        <td class="td-arb">
+          <div class="arb-wrap">
+            <span class="arb-num">${arbAPR}</span>
+            <span class="arb-pair">↓${longLbl} ↑${shrtLbl}</span>
+          </div>
+        </td>
+        ${cells}
+      </tr>`;
+  }).join('');
+
+  // Show/hide
+  const empty = document.getElementById('emptyState');
+  const table = document.getElementById('mainTable');
+  if (filtered.length === 0) {
+    const emptyMsg = q
+      ? `No symbols match "${q}"`
+      : activeFilter
+        ? `No pairs found on ${EX_LABEL[activeFilter]}`
+        : 'No data';
+    empty.innerHTML = `<span>${emptyMsg}</span>`;
+    empty.style.display = 'flex';
+    table.style.display = 'none';
+  } else {
+    empty.style.display = 'none';
+    table.style.display = '';
+  }
+
+  // Re-measure topbar after table appears (height may have changed)
+  updateStickyOffset();
+}
+
+// ── Refresh ───────────────────────────────────────────────────────────────────
+
+async function doRefresh() {
+  if (isRefreshing) return;
+  isRefreshing = true;
+
+  const btn = document.getElementById('btnRefresh');
+  btn.classList.add('spinning');
+  EXCHANGES.forEach(ex => { exStatus[ex] = 'loading'; });
+  renderStatus();
+
+  try {
+    const data = await fetch('/api/rates').then(r => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    });
+    lastData = data;
+    renderTable(data);
+    const t = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    document.getElementById('lastUpd').textContent = 'Updated ' + t;
+  } catch (err) {
+    // Network/server error — keep showing last data if available, just update status pills
+    console.error('Fetch error:', err);
+    if (lastData) {
+      // Mark all exchanges as stale/unknown but keep table visible
+      EXCHANGES.forEach(ex => {
+        if (exStatus[ex] === 'ok') exStatus[ex] = 'stale';
+      });
+      renderStatus();
+    } else {
+      // First load failed — show error message
+      EXCHANGES.forEach(ex => { exStatus[ex] = 'error'; });
+      renderStatus();
+      const empty = document.getElementById('emptyState');
+      empty.innerHTML = '<span style="color:var(--red)">Error fetching data — retrying…</span>';
+      empty.style.display = 'flex';
+      document.getElementById('mainTable').style.display = 'none';
+    }
+  } finally {
+    isRefreshing = false;
+    btn.classList.remove('spinning');
+    startCountdown();
+  }
+}
+
+function triggerRefresh() {
+  clearInterval(cdInterval);
+  doRefresh();
+}
+
+// ── Theme ─────────────────────────────────────────────────────────────────────
+
+function toggleTheme() {
+  isDark = !isDark;
+  applyTheme();
+  localStorage.setItem('theme', isDark ? 'dark' : 'light');
+}
+
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  document.getElementById('btnTheme').textContent = isDark ? '☀️' : '🌙';
+}
+
+// ── Favorites ─────────────────────────────────────────────────────────────────
+
+function toggleFavorite(sym) {
+  if (favorites.has(sym)) favorites.delete(sym);
+  else favorites.add(sym);
+  if (lastData) renderTable(lastData);
+}
+
+// ── Exchange filter ───────────────────────────────────────────────────────────
+
+function setFilter(ex) {
+  activeFilter = ex || null;
+  document.querySelectorAll('.btn-filter').forEach(b => {
+    b.classList.toggle('active', b.dataset.ex === (activeFilter || ''));
+  });
+  if (lastData) renderTable(lastData);
+}
+
+// ── Unit selector ─────────────────────────────────────────────────────────────
+
+function toggleUnitMenu(e) {
+  e.stopPropagation();
+  const menu = document.getElementById('unitMenu');
+  const btn  = document.getElementById('btnUnit');
+  const open = menu.classList.toggle('open');
+  btn.classList.toggle('open', open);
+}
+
+function setDisplayUnit(unit) {
+  displayUnit = unit;
+  document.querySelectorAll('.btn-unit-opt[data-unit]').forEach(b => {
+    b.classList.toggle('active', b.dataset.unit === unit);
+  });
+  document.getElementById('unitBtnLabel').textContent = unitBtnLabel();
+  if (lastData) renderTable(lastData);
+}
+
+function setRateFormat(fmt) {
+  rateFormat = fmt;
+  document.querySelectorAll('.btn-unit-opt[data-fmt]').forEach(b => {
+    b.classList.toggle('active', b.dataset.fmt === fmt);
+  });
+  document.getElementById('unitBtnLabel').textContent = unitBtnLabel();
+  if (lastData) renderTable(lastData);
+}
+
+function unitBtnLabel() {
+  const u = displayUnit === 'apy' ? 'APY' : displayUnit;
+  const f = rateFormat === 'bps' ? 'BPS' : '%';
+  return `${u} | ${f}`;
+}
+
+// ── Search ────────────────────────────────────────────────────────────────────
+
+document.getElementById('searchInput').addEventListener('input', () => {
+  if (lastData) renderTable(lastData);
+});
+
+// ── Funding countdown ─────────────────────────────────────────────────────────
+
+function tickFunding() {
+  const now        = new Date();
+  const secsIntoHr = now.getUTCMinutes() * 60 + now.getUTCSeconds();
+  const secsLeft   = 3600 - secsIntoHr;
+  const mm         = String(Math.floor(secsLeft / 60)).padStart(2, '0');
+  const ss         = String(secsLeft % 60).padStart(2, '0');
+  const nextHour   = (now.getUTCHours() + 1) % 24;
+  const utcStr     = String(nextHour).padStart(2, '0') + ':00 UTC';
+  document.getElementById('fundingTime').textContent = mm + ':' + ss;
+  document.getElementById('fundingUtc').textContent  = '(' + utcStr + ')';
+}
+
+setInterval(tickFunding, 1000);
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+
+isDark = (localStorage.getItem('theme') || 'dark') === 'dark';
+applyTheme();
+
+updateStickyOffset();
+window.addEventListener('resize', updateStickyOffset);
+
+// Close unit menu when clicking outside
+document.addEventListener('click', (e) => {
+  if (!document.getElementById('unitSelector').contains(e.target)) {
+    document.getElementById('unitMenu').classList.remove('open');
+    document.getElementById('btnUnit').classList.remove('open');
+  }
+});
+
+tickFunding();
+renderStatus();
+doRefresh();
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "funding-screener",
+  "version": "1.0.0",
+  "description": "Delta-neutral funding rate arbitrage screener across perp DEXes",
+  "main": "server.js",
+  "scripts": {
+    "start": "concurrently \"node server.js\" \"node bot.js\"",
+    "dev":   "concurrently \"node --watch server.js\" \"node --watch bot.js\""
+  },
+  "dependencies": {
+    "concurrently": "^9.2.1",
+    "dotenv": "^17.3.1",
+    "express": "^4.18.2",
+    "node-fetch": "^2.7.0",
+    "node-telegram-bot-api": "^0.67.0"
+  }
+}
