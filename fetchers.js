@@ -41,6 +41,7 @@ async function fetchHyperliquid() {
   meta.universe.forEach((asset, i) => {
     const ctx = ctxs[i];
     if (!ctx || ctx.funding == null) return;
+    if (parseFloat(ctx.openInterest) === 0 || ctx.midPx == null) return; // dead market
     result[normalizeSymbol(asset.name)] = parseFloat(ctx.funding) * 8;
   });
   return result;
@@ -53,6 +54,8 @@ async function fetchVariational() {
   const result = {};
   (data.listings || []).forEach((listing) => {
     if (listing.funding_rate == null) return;
+    const oi = listing.open_interest;
+    if (!oi || (parseFloat(oi.long_open_interest) === 0 && parseFloat(oi.short_open_interest) === 0)) return; // dead market
     const rateDecimal = parseFloat(listing.funding_rate);
     if (!isFinite(rateDecimal)) return;
     result[normalizeSymbol(listing.ticker)] = rateDecimal / 1095;
@@ -73,6 +76,7 @@ async function fetchAster() {
   const fromUSDT = {};
   (Array.isArray(premiumIndex) ? premiumIndex : []).forEach((item) => {
     if (item.lastFundingRate == null) return;
+    if (!item.markPrice || parseFloat(item.markPrice) === 0) return; // dead market (no bulk OI available)
     const rate = parseFloat(item.lastFundingRate);
     if (!isFinite(rate)) return;
     const sym = normalizeSymbol(item.symbol);
@@ -106,6 +110,7 @@ async function fetch01Exchange() {
     markets.map(async (m) => {
       const stats = await fetchWithTimeout(`https://zo-mainnet.n1.xyz/market/${m.marketId}/stats`);
       if (!stats.perpStats || stats.perpStats.funding_rate == null) return null;
+      if (stats.perpStats.open_interest == null || stats.perpStats.open_interest === 0) return null; // dead market
       return { symbol: normalizeSymbol(m.symbol), rate8h: stats.perpStats.funding_rate * 8 };
     })
   );
