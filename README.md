@@ -84,4 +84,5 @@ The bot sends alerts when funding rate arbitrage opportunities exceed your confi
 - **Frontend:** Vanilla HTML/CSS/JS (single page)
 - **Data:** Direct exchange APIs, normalized server-side to 8h BPS
   
-- Funding rate data provided by [Loris Tools](https://loris.tools)
+- Funding rate data for Variational, Aster and Hyperliquid provided by [Loris Tools](https://loris.tools)
+- 01Exchange Free API
