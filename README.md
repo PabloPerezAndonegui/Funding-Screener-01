@@ -18,7 +18,7 @@ The screener aggregates live funding rates from several perpetual DEX exchanges 
 - **Delta-neutral arbitrage opportunities** sorted by MAX ARB spread
 - **Exchange filter, favorites, and symbol search** for quick navigation
 - **LONG / SHORT highlighting** with color-coded cells per exchange
-- **Display unit toggle** — switch between 1h, 8h, and APY in BPS or %
+- **Display unit toggle** switch between 1h, 8h, and APY in BPS or %
 - **Funding countdown timer** showing time until the next funding payment
 - **Telegram bot** with custom ARB threshold alerts and high-opportunity notifications
 
@@ -27,7 +27,7 @@ The screener aggregates live funding rates from several perpetual DEX exchanges 
 ## Requirements
 
 - Node.js 18+
-- A Telegram bot token (for alert functionality) — obtain one via [@BotFather](https://t.me/BotFather)
+- A Telegram bot token (for alert functionality) —> obtain one via [@BotFather](https://t.me/BotFather)
 
 ---
 
