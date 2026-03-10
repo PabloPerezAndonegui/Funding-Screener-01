@@ -83,3 +83,5 @@ The bot sends alerts when funding rate arbitrage opportunities exceed your confi
 - **Backend:** Node.js + Express
 - **Frontend:** Vanilla HTML/CSS/JS (single page)
 - **Data:** Direct exchange APIs, normalized server-side to 8h BPS
+  
+- Funding rate data provided by [Loris Tools](https://loris.tools)
